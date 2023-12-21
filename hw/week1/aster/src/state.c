@@ -64,7 +64,7 @@ game_state_t* create_default_state() {
 }
 /* Task 2 */
 void free_state(game_state_t* state) {
-  for(int i=0;i<18;i++){
+  for(int i=0;i<state->num_rows;i++){
     free(state->board[i]);
   }
   free(state->board);
@@ -322,11 +322,27 @@ void update_state(game_state_t* state, int (*add_food)(game_state_t* state)) {
 }
 
 /* Task 5 */
-game_state_t* load_board(FILE* fp) {
-  // TODO: Implement this function.
-  return NULL;
-}
 
+game_state_t* load_board(FILE* fp) {
+  game_state_t* loaded_state = (game_state_t*)malloc(sizeof(game_state_t));
+  loaded_state->board = NULL;
+  loaded_state->snakes = NULL;
+  loaded_state->num_snakes = 0;
+  unsigned int rows = 0;
+  char buffer[100];
+  while(fgets(buffer, sizeof(buffer), fp) != NULL){
+    int current_cols = strcspn(buffer, "\n");
+    char *current_row = (char *)malloc((current_cols+1) * sizeof(char));
+    strncpy(current_row, buffer, current_cols);
+    current_row[current_cols] = '\0'; // 添加字符串终止符
+    loaded_state->board = (char**)realloc(loaded_state->board, (rows + 1) * sizeof(char *));
+    loaded_state->board[rows] = current_row;
+    rows++;
+  }      
+  loaded_state->num_rows = rows;
+  unsigned int r = loaded_state->num_rows;
+  return loaded_state;
+}
 /*
   Task 6.1
 
