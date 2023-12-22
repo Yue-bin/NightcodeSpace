@@ -64,7 +64,7 @@ game_state_t* create_default_state() {
 }
 /* Task 2 */
 void free_state(game_state_t* state) {
-  for(int i=0;i<18;i++){
+  for(int i=0;i<state->num_rows;i++){
     free(state->board[i]);
   }
   free(state->board);
@@ -233,7 +233,6 @@ static unsigned int get_next_col(unsigned int cur_col, char c) {
     }
 }
 
-
 /*
   Task 4.2
 
@@ -242,8 +241,11 @@ static unsigned int get_next_col(unsigned int cur_col, char c) {
   This function should not modify anything.
 */
 static char next_square(game_state_t* state, unsigned int snum) {
-  // TODO: Implement this function.
-  return '?';
+  unsigned int col = state->snakes[snum].head_col;
+  unsigned int row = state->snakes[snum].head_row;
+  unsigned int next_row = get_next_row(row, state->board[row][col]);
+  unsigned int next_col = get_next_col(col, state->board[row][col]);
+  return state->board[next_row][next_col];
 }
 
 /*
@@ -258,7 +260,14 @@ static char next_square(game_state_t* state, unsigned int snum) {
   Note that this function ignores food, walls, and snake bodies when moving the head.
 */
 static void update_head(game_state_t* state, unsigned int snum) {
-  // TODO: Implement this function.
+  unsigned int col = state->snakes[snum].head_col;
+  unsigned int row = state->snakes[snum].head_row;
+  unsigned int next_col = get_next_col(col, state->board[row][col]);
+  unsigned int next_row = get_next_row(row, state->board[row][col]);//get next row
+  state->snakes[snum].head_col = next_col;// update col
+  state->snakes[snum].head_row = next_row;//update row
+  state->board[next_row][next_col] = state->board[row][col];//update current head
+  state->board[row][col] = head_to_body(state->board[row][col]);//update pre_body
   return;
 }
 
@@ -273,22 +282,67 @@ static void update_head(game_state_t* state, unsigned int snum) {
   ...in the snake struct: update the row and col of the tail
 */
 static void update_tail(game_state_t* state, unsigned int snum) {
-  // TODO: Implement this function.
+  unsigned int col = state->snakes[snum].tail_col;
+  unsigned int row = state->snakes[snum].tail_row;
+  unsigned int next_row = get_next_row(row, state->board[row][col]);
+  unsigned int next_col = get_next_col(col, state->board[row][col]);
+  state->snakes[snum].tail_col = next_col;
+  state->snakes[snum].tail_row = next_row;
+  state->board[next_row][next_col] = body_to_tail(state->board[next_row][next_col]);
+  state->board[row][col] = ' ';
   return;
 }
 
 /* Task 4.5 */
 void update_state(game_state_t* state, int (*add_food)(game_state_t* state)) {
-  // TODO: Implement this function.
+  for (int i = 0; i < state->num_snakes; i++)
+  {
+    char next_char = next_square(state, i);
+    if (next_char == '#' || is_snake(next_char) && state->snakes[i].live == true)
+    {
+      state->board[state->snakes[i].head_row][state->snakes[i].head_col] = 'x';
+      state->snakes[i].live = false;
+    }
+    else if (next_char == ' ' && state->snakes[i].live == true)
+    {
+      update_head(state, i);
+      update_tail(state, i);
+    }
+    else if (next_char == '*' && state->snakes[i].live == true)
+    {
+      update_head(state, i);
+      int res = add_food(state);
+    }
+    else
+    {
+      exit(0);
+    }
+  }
   return;
 }
 
 /* Task 5 */
-game_state_t* load_board(FILE* fp) {
-  // TODO: Implement this function.
-  return NULL;
-}
 
+game_state_t* load_board(FILE* fp) {
+  game_state_t* loaded_state = (game_state_t*)malloc(sizeof(game_state_t));
+  loaded_state->board = NULL;
+  loaded_state->snakes = NULL;
+  loaded_state->num_snakes = 0;
+  unsigned int rows = 0;
+  char buffer[100];
+  while(fgets(buffer, sizeof(buffer), fp) != NULL){
+    int current_cols = strcspn(buffer, "\n");
+    char *current_row = (char *)malloc((current_cols+1) * sizeof(char));
+    strncpy(current_row, buffer, current_cols);
+    current_row[current_cols] = '\0'; // 添加字符串终止符
+    loaded_state->board = (char**)realloc(loaded_state->board, (rows + 1) * sizeof(char *));
+    loaded_state->board[rows] = current_row;
+    rows++;
+  }      
+  loaded_state->num_rows = rows;
+  unsigned int r = loaded_state->num_rows;
+  return loaded_state;
+}
 /*
   Task 6.1
 
