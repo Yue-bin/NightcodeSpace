@@ -322,7 +322,6 @@ void update_state(game_state_t* state, int (*add_food)(game_state_t* state)) {
 }
 
 /* Task 5 */
-
 game_state_t* load_board(FILE* fp) {
   game_state_t* loaded_state = (game_state_t*)malloc(sizeof(game_state_t));
   loaded_state->board = NULL;
@@ -343,6 +342,8 @@ game_state_t* load_board(FILE* fp) {
   unsigned int r = loaded_state->num_rows;
   return loaded_state;
 }
+
+
 /*
   Task 6.1
 
@@ -352,12 +353,55 @@ game_state_t* load_board(FILE* fp) {
   fill in the head row and col in the struct.
 */
 static void find_head(game_state_t* state, unsigned int snum) {
-  // TODO: Implement this function.
+  unsigned int cur_r = state->snakes[snum].tail_row;
+  unsigned int cur_c = state->snakes[snum].tail_col;
+  char cur_ch = get_board_at(state, cur_r, cur_c);
+  while (!is_head(cur_ch)){
+    cur_r = get_next_row(cur_r, cur_ch);
+    cur_c = get_next_col(cur_c, cur_ch);
+    cur_ch = get_board_at(state, cur_r, cur_c);
+  }
+  state->snakes[snum].head_row = cur_r;
+  state->snakes[snum].head_col =  cur_c;
   return;
 }
-
 /* Task 6.2 */
-game_state_t* initialize_snakes(game_state_t* state) {
-  // TODO: Implement this function.
-  return NULL;
+game_state_t *initialize_snakes(game_state_t *state)
+{
+  state->snakes = NULL;
+  unsigned int snum = 0;
+  for (int i = 0; i < state->num_rows; i++)
+  {
+    int j = 0;
+    while (state->board[i][j] != '\0')
+    {
+      if (is_tail(state->board[i][j]) && snum == 0)
+      {
+        state->snakes = (snake_t *)malloc(sizeof(snake_t));
+        state->snakes[snum].tail_row = i;
+        state->snakes[snum].tail_col = j;
+        find_head(state, snum);
+        state->snakes[snum].live = true;
+        state->num_snakes++;
+        snum++;
+        j++;
+      }
+      else if (is_tail(state->board[i][j]))
+      {
+        state->snakes = (snake_t *)realloc(state->snakes, (snum + 1) * sizeof(snake_t));
+        find_head(state, snum);
+        state->snakes[snum].tail_row = i;
+        state->snakes[snum].tail_col = j;
+        state->snakes[snum].live = true;
+        state->num_snakes++;
+        snum++;
+        j++;
+      }
+      else
+      {
+        j++;
+      }
+    }
+  }
+  return state;
 }
