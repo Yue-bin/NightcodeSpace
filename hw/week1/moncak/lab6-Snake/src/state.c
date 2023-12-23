@@ -1,6 +1,7 @@
 #include "state.h"
 
 #include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -334,10 +335,28 @@ game_state_t *load_board(FILE *fp) {
   // board
   // init
   state->num_rows = 0;
-  char temp_col[100] = {'\0'};
+  state->board = malloc(sizeof(char *) * state->num_rows);
+  char *temp_col = (char *)malloc(sizeof(char) * UINT16_MAX *
+                                  2); // 一个非常大的临时变量，无伤大雅(
+  memset(temp_col, '\0', sizeof(char) * UINT16_MAX * 2);
   // read each line until eof
   while (fscanf(fp, "%[^\n]", temp_col) != EOF) {
-    
+    // update num_rows
+    state->num_rows++;
+    // realloc
+    state->board = realloc(state->board, sizeof(char *) * state->num_rows);
+    // malloc
+    state->board[state->num_rows - 1] = malloc(
+        sizeof(char) *
+        (strlen(temp_col) +
+         1)); // 直接这么写会在realloc不能拓展当前内存空间而是重新分配的时候丢弃前面所有行
+              // but who cares
+    // copy
+    strcpy(state->board[state->num_rows - 1], temp_col);
+    // clear temp_col
+    memset(temp_col, '\0', sizeof(char) * UINT16_MAX * 2);
+    // skip '\n'
+    fgetc(fp);
   }
 
   // snakes
@@ -356,12 +375,45 @@ game_state_t *load_board(FILE *fp) {
   fill in the head row and col in the struct.
 */
 static void find_head(game_state_t *state, unsigned int snum) {
-  // TODO: Implement this function.
+  // init the trace
+  unsigned int cur_row = state->snakes[snum].tail_row;
+  unsigned int cur_col = state->snakes[snum].tail_col;
+  // start trace
+  do {
+    unsigned int next_row =
+        get_next_row(cur_row, get_board_at(state, cur_row, cur_col));
+    unsigned int next_col =
+        get_next_col(cur_col, get_board_at(state, cur_row, cur_col));
+    cur_row = next_row;
+    cur_col = next_col;
+  } while (!is_head(get_board_at(state, cur_row, cur_col)));
+  // fill the head
+  state->snakes[snum].head_row = cur_row;
+  state->snakes[snum].head_col = cur_col;
   return;
 }
 
 /* Task 6.2 */
 game_state_t *initialize_snakes(game_state_t *state) {
-  // TODO: Implement this function.
-  return NULL;
+  // find the tail
+  for (unsigned int i = 0; i < state->num_rows; i++) {
+    for (unsigned int j = 0; j < strlen(state->board[i]); j++) {
+      if (is_tail(get_board_at(state, i, j))) {
+        // update num_snakes
+        state->num_snakes++;
+        // realloc
+        state->snakes =
+            realloc(state->snakes, sizeof(snake_t) * state->num_snakes);
+        // 这里同上面那个realloc可能发生数据丢失,but who cares
+        // fill the tail
+        state->snakes[state->num_snakes - 1].tail_row = i;
+        state->snakes[state->num_snakes - 1].tail_col = j;
+        // find the head
+        find_head(state, state->num_snakes - 1);
+        // live
+        state->snakes[state->num_snakes - 1].live = true;
+      }
+    }
+  }
+  return state;
 }
