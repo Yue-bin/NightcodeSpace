@@ -328,7 +328,7 @@ game_state_t* load_board(FILE* fp) {
   loaded_state->snakes = NULL;
   loaded_state->num_snakes = 0;
   unsigned int rows = 0;
-  char buffer[100];
+  char buffer[65536*2];
   while(fgets(buffer, sizeof(buffer), fp) != NULL){
     int current_cols = strcspn(buffer, "\n");
     char *current_row = (char *)malloc((current_cols+1) * sizeof(char));
@@ -368,40 +368,25 @@ static void find_head(game_state_t* state, unsigned int snum) {
 /* Task 6.2 */
 game_state_t *initialize_snakes(game_state_t *state)
 {
-  state->snakes = NULL;
+  unsigned int max_snakes = 256; // Assuming each cell could be a snake
+  state->snakes = (snake_t *)malloc(max_snakes * sizeof(snake_t));
   unsigned int snum = 0;
   for (int i = 0; i < state->num_rows; i++)
   {
-    int j = 0;
-    while (state->board[i][j] != '\0')
+    for (int j = 0; state->board[i][j] != '\0'; j++)
     {
-      if (is_tail(state->board[i][j]) && snum == 0)
+      if (is_tail(state->board[i][j]))
       {
-        state->snakes = (snake_t *)malloc(sizeof(snake_t));
         state->snakes[snum].tail_row = i;
         state->snakes[snum].tail_col = j;
         find_head(state, snum);
         state->snakes[snum].live = true;
         state->num_snakes++;
         snum++;
-        j++;
-      }
-      else if (is_tail(state->board[i][j]))
-      {
-        state->snakes = (snake_t *)realloc(state->snakes, (snum + 1) * sizeof(snake_t));
-        find_head(state, snum);
-        state->snakes[snum].tail_row = i;
-        state->snakes[snum].tail_col = j;
-        state->snakes[snum].live = true;
-        state->num_snakes++;
-        snum++;
-        j++;
-      }
-      else
-      {
-        j++;
       }
     }
   }
+  // Resize the snakes array to the actual number of snakes found
+  state->snakes = (snake_t *)realloc(state->snakes, state->num_snakes * sizeof(snake_t));
   return state;
 }
