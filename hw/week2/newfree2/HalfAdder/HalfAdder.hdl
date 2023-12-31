@@ -1,0 +1,13 @@
+CHIP HalfAdder {
+    IN a, b;    // 1-bit inputs
+    OUT sum,    // Right bit of a + b 
+        carry;  // Left bit of a + b
+
+    PARTS:
+    And(a=a, b=b, out=carry);
+    Not(in=a, out=outa);
+    Not(in=b, out=outb);
+    Or(a=a, b=b, out=out1);
+    Or(a=outa, b=outb, out=out2);
+    And(a=out1, b=out2, out=sum);
+}
