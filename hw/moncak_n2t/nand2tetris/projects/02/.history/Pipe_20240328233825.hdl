@@ -1,0 +1,9 @@
+
+CHIP GetNotHSB {
+    IN  
+        in[16];
+    OUT 
+        out;
+    PARTS:
+        Not(in=in[15], out=out);
+}

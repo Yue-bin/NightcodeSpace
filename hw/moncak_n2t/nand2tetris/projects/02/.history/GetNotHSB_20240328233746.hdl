@@ -1,0 +1,30 @@
+
+CHIP GetHSB {
+    IN  
+        in[16];
+    OUT 
+        out;
+
+    PARTS:
+    //X
+        //zx
+        Not(in=zx, out=notzx);
+        And16(a=x, b[0..15]=notzx, out=x1);
+        //nx
+        Xor16(a=x1, b=nx, out=x2);
+    //Y
+        //zy
+        Not(in=zy, out=notzy);
+        And16(a=y, b[0..15]=notzy, out=y1);
+        //ny
+        Xor16(a=y1, b=ny, out=y2);
+    //f
+        //x+y
+        Add16(a=x2, b=y2, out=xaddy);
+        //x&y
+        And16(a=x2, b=y2, out=xandy);
+        //choose
+        Mux16(a=xaddy, b=xandy, sel=f, out=fxy);
+    //no
+        Xor16(a=a, b=b, out=out);
+}

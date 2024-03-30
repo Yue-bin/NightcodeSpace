@@ -1,0 +1,24 @@
+
+CHIP Or16Way16 {
+    IN  
+        in[16];
+    OUT 
+        out;
+    PARTS:
+    Or(a=in[0], b=in[1], out=out1);
+    Or(a=in[2], b=in[3], out=out2);
+    Or(a=in[4], b=in[5], out=out3);
+    Or(a=in[6], b=in[7], out=out4);
+    Or(a=in[8], b=in[9], out=out5);
+    Or(a=in[10], b=in[11], out=out6);
+    Or(a=in[12], b=in[13], out=out7);
+    Or(a=in[14], b=in[15], out=out8);
+    Or(a=out1, b=out2, out=out9);
+    Or(a=out3, b=out4, out=out10);
+    Or(a=out5, b=out6, out=out11);
+    Or(a=out7, b=out8, out=out12);
+    Or(a=out9, b=out10, out=out13);
+    Or(a=out11, b=out12, out=out14);
+    Or(a=out13, b=out14, out=out);
+    
+}
